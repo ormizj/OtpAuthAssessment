@@ -15,6 +15,7 @@
     "dev:backend": "turbo run dev --filter=backend",
     "dev:frontend": "turbo run dev --filter=frontend",
     "build": "turbo run build",
+    "start": "turbo run start",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test"
   },

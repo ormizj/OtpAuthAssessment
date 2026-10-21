@@ -93,6 +93,8 @@ Values are common industry defaults, and they are all tunable in `OTP_POLICY`.
 - **Single process assumed.** flatdb (the JSON-file database), the per-phone `KeyedMutex` and the throttler counters all live in one process. The swap points for horizontal scale (SQL database, Redis lock, Redis throttler storage) are listed in the README.
 - CORS allows exactly one origin (`CLIENT_ORIGIN`). JSON bodies are limited to 10 KB. Helmet headers are on.
 - No Vite dev proxy: the frontend calls `VITE_API_URL` (default `http://localhost:3000/api`) directly.
+- **Production build and start were added and tested.** `npm run build` builds both apps. `npm start` (`turbo run start`) then serves the built output: the backend runs `node dist/main` on :3000 and the frontend runs `vite preview` on :5173. Both were run end to end to confirm the app works from its production build, not only in dev mode. Turbo passes the production env vars through to `start` (`NODE_ENV`, `PORT`, `CLIENT_ORIGIN`, `TRUST_PROXY`, `DATABASE_DIR`, `JWT_SECRET`, `OTP_PEPPER`). With `NODE_ENV=production`, `JWT_SECRET` and `OTP_PEPPER` must be set (see §9).
+- `vite preview` is good enough to check the built frontend. A real deployment would serve `apps/frontend/dist` from a static host or CDN, and `VITE_API_URL` must be set at build time because Vite inlines it into the bundle.
 
 ## 14. Out of scope
 

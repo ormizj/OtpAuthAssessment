@@ -23,6 +23,7 @@ The monorepo is orchestrated with [Turborepo](https://turborepo.com) (`turbo.jso
 | `npm run typecheck` | Type-checks both apps                           |
 | `npm test`          | Runs backend unit tests (Jest)                  |
 | `npm run build`     | Production build of both apps                   |
+| `npm start`         | Serves the built apps (backend :3000, frontend preview :5173) |
 
 Run a single app with `npm run dev:backend` or `npm run dev:frontend`, or execute any task with a filter, e.g., `npx turbo run test --filter=backend`.
 
