@@ -1,16 +1,29 @@
 import { useEffect, useState } from 'react';
 
-/** Seconds left of a countdown, ticking once per second. `start(n)` (re)starts it. */
-export function useCountdown(initialSeconds = 0) {
-  const [endsAt, setEndsAt] = useState(() => Date.now() + initialSeconds * 1000);
-  const [secondsLeft, setSecondsLeft] = useState(initialSeconds);
+/**
+ * Seconds left until `initialEndsAt` (epoch ms), ticking once per second. `start(n)` (re)starts it
+ * and returns the new end time, so callers can persist it and resume the countdown later.
+ */
+export function useCountdown(initialEndsAt = 0) {
+  const [endsAt, setEndsAt] = useState(initialEndsAt);
+  const [secondsLeft, setSecondsLeft] = useState(() => remaining(initialEndsAt));
 
   useEffect(() => {
-    const tick = () => setSecondsLeft(Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)));
+    const tick = () => setSecondsLeft(remaining(endsAt));
     tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
   }, [endsAt]);
 
-  return { secondsLeft, start: (seconds: number) => setEndsAt(Date.now() + seconds * 1000) };
+  function start(seconds: number): number {
+    const next = Date.now() + seconds * 1000;
+    setEndsAt(next);
+    return next;
+  }
+
+  return { secondsLeft, start };
+}
+
+function remaining(endsAt: number): number {
+  return Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
 }

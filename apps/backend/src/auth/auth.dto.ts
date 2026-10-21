@@ -10,7 +10,7 @@ export const PhoneSchema = z
   .transform((value, ctx) => {
     const phone = value.startsWith('+') ? parsePhoneNumberFromString(value) : undefined;
     if (!phone?.isValid()) {
-      ctx.addIssue({ code: 'custom', message: 'Enter a valid phone number including the country code, e.g. +1 555 123 4567' });
+      ctx.addIssue({ code: 'custom', message: 'Enter a valid phone number including the country code, e.g. +1 202 555 0143' });
       return z.NEVER;
     }
     return phone.number;

@@ -12,22 +12,30 @@ import { paths } from '../paths';
 
 const CODE_LENGTH = 6;
 
+/** State the login page passes along. Survives reloads, so the cooldown is an absolute time. */
+export interface VerifyLocationState {
+  /** When "Resend code" becomes available (epoch ms). */
+  resendAt?: number;
+}
+
 /**
  * "/verify?phone=<E.164>" - Step 2: one-time code.
  */
 export function VerifyPage() {
   const phone = useSearchParams()[0].get('phone');
-  const resendIn = (useLocation().state as { resendIn?: number } | null)?.resendIn ?? 0;
+  const location = useLocation();
+  const resendAt = (location.state as VerifyLocationState | null)?.resendAt;
   const navigate = useNavigate();
   const { signIn, startRegistration } = useAuth();
-  const cooldown = useCountdown(resendIn);
+  const cooldown = useCountdown(resendAt);
   const [code, setCode] = useState('');
   const [error, setError] = useState<string>();
   const [info, setInfo] = useState<string>();
   const [submitting, setSubmitting] = useState(false);
   const [resending, setResending] = useState(false);
 
-  if (!phone) return <Navigate to={paths.login} replace />;
+  // Only numbers the server normalized (E.164) get here; anything else was typed into the URL.
+  if (!phone || !/^\+\d{8,15}$/.test(phone)) return <Navigate to={paths.login} replace />;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -55,17 +63,23 @@ export function VerifyPage() {
     }
   }
 
+  /** Restarts the cooldown and keeps it in the history entry, so a reload resumes it. */
+  function startCooldown(seconds: number) {
+    const state: VerifyLocationState = { resendAt: cooldown.start(seconds) };
+    navigate({ pathname: location.pathname, search: location.search }, { replace: true, state });
+  }
+
   async function handleResend() {
     setResending(true);
     setError(undefined);
     setInfo(undefined);
     try {
       const result = await api.requestOtp(phone!);
-      cooldown.start(result.resendIn);
+      startCooldown(result.resendIn);
       setCode('');
       setInfo('We sent you a new code.');
     } catch (e) {
-      if (e instanceof ApiError && e.retryAfter) cooldown.start(e.retryAfter);
+      if (e instanceof ApiError && e.retryAfter) startCooldown(e.retryAfter);
       setError(e instanceof ApiError ? e.message : 'Could not send a new code.');
     } finally {
       setResending(false);
@@ -101,7 +115,7 @@ export function VerifyPage() {
         </Button>
 
         <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
-          <Button type="button" variant="text" size="small" onClick={() => navigate(paths.login)}>
+          <Button type="button" variant="text" size="small" onClick={() => navigate(paths.login, { replace: true })}>
             Use a different number
           </Button>
           <Button
