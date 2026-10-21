@@ -10,3 +10,6 @@ coverage/
 .local.
 # flatdb rows (DATABASE_DIR default)
 apps/backend/data/
+
+# JetBrains IDE settings
+.idea/
