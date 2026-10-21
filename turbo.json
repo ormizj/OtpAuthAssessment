@@ -4,6 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**"]
     },
     "typecheck": {
@@ -16,7 +17,15 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "passThroughEnv": ["PORT", "CLIENT_ORIGIN"]
+      "passThroughEnv": [
+        "NODE_ENV",
+        "PORT",
+        "CLIENT_ORIGIN",
+        "TRUST_PROXY",
+        "DATABASE_DIR",
+        "JWT_SECRET",
+        "OTP_PEPPER"
+      ]
     }
   }
 }

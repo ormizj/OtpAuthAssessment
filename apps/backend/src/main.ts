@@ -8,7 +8,11 @@ import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
+import { existsSync } from 'node:fs';
 import { AppModule } from './app.module';
+
+// Load `.env` from the working directory if present; variables already set in the shell win.
+if (existsSync('.env')) process.loadEnvFile();
 
 export const API_PREFIX = 'api';
 

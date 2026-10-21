@@ -8,6 +8,8 @@ Requirements: Node.js 24+ (`nvm use` picks it up from `.nvmrc`).
 
 ```bash
 npm install
+cp apps/backend/.env.example apps/backend/.env    # then fill in JWT_SECRET / OTP_PEPPER
+cp apps/frontend/.env.example apps/frontend/.env
 npm run dev        # backend on :3000, frontend on http://localhost:5173
 ```
 
