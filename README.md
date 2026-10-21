@@ -73,6 +73,8 @@ await examples.findOne({ ... });
 ```
 ## Auth Flow, Security & Scaling
 
+Every requirement / design assumption (and why) is listed in [ASSUMPTIONS.md](ASSUMPTIONS.md).
+
 ```text
 /  (phone)  ──POST /api/auth/request-otp──▶  SMS (backend terminal)
 /verify?phone=+…  ──POST /api/auth/verify-otp──▶  existing user → session JWT → /home
