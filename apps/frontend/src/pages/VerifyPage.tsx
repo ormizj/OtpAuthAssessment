@@ -7,7 +7,7 @@ import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-route
 import { ApiError, api } from '../api';
 import { useAuth } from '../auth/AuthProvider';
 import { AuthLayout } from '../components/AuthLayout';
-import { useCountdown } from '../hooks/useCountdown';
+import { formatSeconds, useCountdown } from '../hooks/useCountdown';
 import { paths } from '../paths';
 
 const CODE_LENGTH = 6;
@@ -126,7 +126,7 @@ export function VerifyPage() {
             loading={resending}
             disabled={cooldown.secondsLeft > 0 || submitting}
           >
-            {cooldown.secondsLeft > 0 ? `Resend code (${cooldown.secondsLeft}s)` : 'Resend code'}
+            {cooldown.secondsLeft > 0 ? `Resend code (${formatSeconds(cooldown.secondsLeft)})` : 'Resend code'}
           </Button>
         </Stack>
       </Stack>

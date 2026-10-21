@@ -24,6 +24,12 @@ export function useCountdown(initialEndsAt = 0) {
   return { secondsLeft, start };
 }
 
+/** Short label for a countdown: `45s`, `2m 05s`. */
+export function formatSeconds(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  return `${Math.floor(seconds / 60)}m ${String(seconds % 60).padStart(2, '0')}s`;
+}
+
 function remaining(endsAt: number): number {
   return Math.max(0, Math.ceil((endsAt - Date.now()) / 1000));
 }
