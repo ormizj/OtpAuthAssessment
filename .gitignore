@@ -7,3 +7,6 @@ coverage/
 .env.local
 .DS_Store
 *.log
+.local.
+# flatdb rows (DATABASE_DIR default)
+apps/backend/data/

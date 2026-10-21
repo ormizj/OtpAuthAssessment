@@ -69,3 +69,34 @@ const examples = this.db.table('examples'); // fully typed, every call is async
 await examples.insert({ ... });
 await examples.findOne({ ... });
 ```
+## Auth Flow, Security & Scaling
+
+```text
+/  (phone)  ──POST /api/auth/request-otp──▶  SMS (backend terminal)
+/verify?phone=+…  ──POST /api/auth/verify-otp──▶  existing user → session JWT → /home
+                                                 new user      → registration JWT → /register
+/register  ──POST /api/auth/complete-registration (Bearer registration JWT)──▶ session JWT → /home
+/home  ──GET /api/auth/me (Bearer session JWT)
+```
+
+**Security**
+
+- OTP: 6 digits from `crypto.randomInt`, stored only as `HMAC-SHA256(OTP_PEPPER, phone:code)` and compared in constant time. Valid 3 minutes, single use, 3 wrong attempts kill it, a new code invalidates the previous one.
+- Per-phone limits (in `AuthService`): 60s resend cooldown, 3 codes per hour, 1h lockout after 3 exhausted codes within an hour (429 + `Retry-After`). Per-IP limits (`@nestjs/throttler`): 60 req/min overall, 5/min on `request-otp` and `complete-registration`, 10/min on `verify-otp`.
+- `request-otp` responds identically for registered and unknown numbers (no account enumeration).
+- An account can only be created with a registration JWT, which is only issued after a correct OTP and carries the verified phone; the phone is never taken from the request body. It expires after 15 minutes and works once (the phone is registered afterwards). Tokens carry a `typ` claim, so a session cannot be used as a registration ticket and vice versa.
+- Races: per-phone in-process mutex around every read-modify-write, plus flatdb unique constraints on `users.phone` and `users.email`.
+- Inputs validated with zod (phone normalized to E.164 with libphonenumber-js, email lowercased); helmet headers; 10kb JSON body limit.
+- Sessions are stateless 1h JWTs (`Authorization: Bearer`, stored in localStorage). They cannot be revoked before expiry; sign-out discards the token client-side.
+
+Set `JWT_SECRET` and `OTP_PEPPER` (required when `NODE_ENV=production`; in development a random per-process secret is used, so restarts log users out). Set `TRUST_PROXY` behind a reverse proxy so rate limits see the client IP.
+
+**Performance & scaling**
+
+The request path is cheap: authenticated requests verify a JWT (no session lookup), OTP hashing is a single HMAC, and expired challenges are purged every 10 minutes. The app layer is stateless apart from three per-process pieces, which are the swap points for running multiple instances:
+
+| Piece | Now | For horizontal scale |
+| --- | --- | --- |
+| Database | flatdb files (safe within one process only) | Postgres/MySQL with unique indexes |
+| Per-phone lock (`KeyedMutex`) | in memory | row locks / atomic updates in the DB, or a Redis lock |
+| Rate-limit counters (`ThrottlerModule`) | in memory | Redis throttler storage |
