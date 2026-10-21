@@ -14,3 +14,9 @@ apps/backend/data/
 
 # JetBrains IDE settings
 .idea/
+
+# VS Code settings
+.vscode/
+
+# Playwright MCP output
+.playwright-mcp/
