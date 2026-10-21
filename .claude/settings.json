@@ -1,0 +1,6 @@
+{
+  "enabledPlugins": {
+    "commit-commands@anthropic-plugin-directory": true,
+    "typescript-lsp@claude-plugins-official": true
+  }
+}
