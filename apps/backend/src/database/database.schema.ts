@@ -1,4 +1,4 @@
-import type { z } from 'zod';
+import { z } from 'zod';
 import type { Row, TableSchema } from './table';
 
 /**
@@ -42,12 +42,45 @@ import type { Row, TableSchema } from './table';
  * See `table.ts` for the full table API.
  */
 
+/** A registered account. Only created after the phone passed OTP verification. */
+export const UserSchema = z.object({
+  /** E.164, e.g. `+15551234567`. Unique. */
+  phone: z.string().regex(/^\+[1-9]\d{6,14}$/),
+  name: z.string().trim().min(1).max(100),
+  /** Lowercased. Unique. */
+  email: z.email().max(254),
+});
+
 /**
- * Table name -> row schema.
+ * One row per OTP sent. The code itself is never stored, only its HMAC (see `AuthService`).
  *
- * TODO: Candidate to implement
+ * A challenge is active while it is not consumed, not invalidated, not expired and has attempts
+ * left. `createdAt` doubles as the send time for resend cooldowns and hourly caps.
  */
-export const databaseSchema = {} satisfies Record<string, TableSchema>;
+export const OtpChallengeSchema = z.object({
+  phone: z.string(),
+  codeHash: z.string(),
+  expiresAt: z.coerce.date(),
+  attempts: z.number().int().min(0).default(0),
+  /** Set once the correct code was entered: a code can only be used once. */
+  consumedAt: z.coerce.date().optional(),
+  /** Set when a newer code was requested for the same phone. */
+  invalidatedAt: z.coerce.date().optional(),
+});
+
+/** Table name -> row schema. */
+export const databaseSchema = {
+  users: UserSchema,
+  otpChallenges: OtpChallengeSchema,
+} satisfies Record<string, TableSchema>;
+
+/**
+ * Per-table storage options. `unique` columns are enforced by flatdb with a compare-and-swap on
+ * its index, so two concurrent inserts of the same value cannot both succeed.
+ */
+export const tableOptions: { [K in keyof typeof databaseSchema]?: { unique?: string[] } } = {
+  users: { unique: ['phone', 'email'] },
+};
 
 export type DatabaseSchema = typeof databaseSchema;
 

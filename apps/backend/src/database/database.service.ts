@@ -1,6 +1,6 @@
 import { Inject, Injectable, OnModuleDestroy, OnModuleInit, Optional } from '@nestjs/common';
 import type { Collection, FlatDb } from '@loewen-digital/flatdb';
-import { databaseSchema, type DatabaseSchema, type TableName } from './database.schema';
+import { databaseSchema, tableOptions, type DatabaseSchema, type TableName } from './database.schema';
 import { Table, type TableSchema } from './table';
 
 /** Folder the database writes its JSON files to. Without it, data is kept in memory (tests). */
@@ -30,7 +30,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   constructor(@Optional() @Inject(DATABASE_DIR) dir?: string) {
     // flatdb is ESM-only, so it is loaded with a dynamic import.
     this.db = import('@loewen-digital/flatdb').then(({ flatdb, collection, FsAdapter, MemoryAdapter }) => {
-      const collections = Object.fromEntries(Object.keys(databaseSchema).map((name) => [name, collection()]));
+      const collections = Object.fromEntries(
+        Object.keys(databaseSchema).map((name) => [name, collection(undefined, tableOptions[name as TableName])]),
+      );
       return flatdb(dir ? new FsAdapter(dir) : new MemoryAdapter(), collections);
     });
     this.db.catch(() => undefined);
